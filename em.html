@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floating Hearts Animation with Audio</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: pink;
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            display: flex; /* For centering button if needed */
+            flex-direction: column;
+            align-items: center;
+        }
+        #message {
+            position: absolute;
+            width: 100%;
+            top: 40%;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            z-index: 10;
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #audioControls {
+            position: absolute;
+            bottom: 20px; /* Position at the bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15; /* Above canvas and message */
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 5px;
+        }
+        #audioControls button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="message">I Love You ❤</div>
+    <canvas id="canvas"></canvas>
+
+    <audio id="myAudio" loop>
+        <source src="Tatiana_Manaois_-_Helplessly_Vistanaij.com.ng.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div id="audioControls">
+        <button id="playPauseButton">click to listen</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const hearts = [];
+
+        // --- Audio Setup ---
+        const audioElement = document.getElementById("myAudio");
+        const playPauseButton = document.getElementById("playPauseButton");
+        let isPlaying = false;
+
+        // Attempt to autoplay (might be blocked by browser)
+        // Some browsers only allow autoplay if the audio is muted or after user interaction.
+        // We'll primarily rely on the button.
+        audioElement.play().then(() => {
+            isPlaying = true;
+            playPauseButton.textContent = "Pause Music";
+        }).catch(error => {
+            console.log("Autoplay was prevented. Use the button to play audio.");
+            // Autoplay was prevented, user needs to interact.
+            isPlaying = false;
+            playPauseButton.textContent = "Play Music";
+        });
+
+
+        playPauseButton.addEventListener("click", () => {
+            if (isPlaying) {
+                audioElement.pause();
+                playPauseButton.textContent = "Play Music";
+            } else {
+                audioElement.play().then(() => {
+                    playPauseButton.textContent = "Pause Music";
+                }).catch(error => {
+                    console.error("Error playing audio:", error);
+                    // Handle potential errors like file not found, etc.
+                });
+            }
+            isPlaying = !isPlaying;
+        });
+
+
+        class Heart {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 100;
+                this.size = Math.random() * 20 + 15;
+                this.speed = Math.random() * 2 + 1;
+                this.color = `rgba(255, ${Math.random() * 100}, ${Math.random() * 100 + 100}, ${Math.random() * 0.5 + 0.5})`;
+            }
+
+            update() {
+                this.y -= this.speed;
+                if (this.y < -this.size * 2) {
+                    this.y = canvas.height + Math.random() * 50 + this.size;
+                    this.x = Math.random() * canvas.width;
+                    this.size = Math.random() * 20 + 15;
+                    this.speed = Math.random() * 2 + 1;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                const x = this.x;
+                const y = this.y;
+                const width = this.size;
+                const height = this.size;
+
+                ctx.moveTo(x, y);
+                ctx.bezierCurveTo(x - width / 4, y - height / 2, x - width / 2, y - height / 1.5, x - width / 2, y - height);
+                ctx.arc(x - width / 4, y - height, width / 4, Math.PI, 0, false);
+                ctx.arc(x + width / 4, y - height, width / 4, Math.PI, 0, false);
+                ctx.bezierCurveTo(x + width / 2, y - height / 1.5, x + width / 4, y - height / 2, x, y);
+                
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function createHearts() {
+            hearts.length = 0;
+            const numberOfHearts = Math.floor(canvas.width / 30);
+            for (let i = 0; i < numberOfHearts; i++) {
+                hearts.push(new Heart());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hearts.forEach(heart => {
+                heart.update();
+                heart.draw();
+            });
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createHearts();
+             // Start animation if not already running (requestAnimationFrame returns an ID)
+            if (typeof animationFrameId === 'undefined' || animationFrameId === 0) {
+                animate();
+            }
+        }
+
+        let animationFrameId;
+
+        window.addEventListener("resize", () => {
+            // Clear previous animation frame if resizing to avoid multiple loops
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = 0; // Reset ID
+            }
+            init();
+        });
+
+        init();
+
+    </script>
+</body>
+</html>
